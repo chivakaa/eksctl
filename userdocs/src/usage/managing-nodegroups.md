@@ -76,6 +76,11 @@ nodeGroups:
     classicLoadBalancerNames:
       - dev-clb-1
       - dev-clb-2
+    asgMetricsCollection:
+      - granularity: 1Minute
+        metrics:
+          - GroupMinSize
+          - GroupMaxSize
   - name: ng-2-api
     labels: { role: api }
     instanceType: m5.2xlarge

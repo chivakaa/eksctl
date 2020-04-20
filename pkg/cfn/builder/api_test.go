@@ -70,6 +70,7 @@ type Properties struct {
 	VPCZoneIdentifier interface{}
 
 	LoadBalancerNames                 []string
+	MetricsCollection                 []interface{}
 	TargetGroupARNs                   []string
 	DesiredCapacity, MinSize, MaxSize string
 
@@ -771,7 +772,15 @@ var _ = Describe("CloudFormation template builder API", func() {
 
 	Context("NodeGroupAutoScaling", func() {
 		cfg, ng := newClusterConfigAndNodegroup(true)
-
+		ng.ASGMetricsCollection = []api.MetricsCollection{
+			{
+				Granularity: "1Minute",
+				Metrics: []string{
+					"GroupMinSize",
+					"GroupMaxSize",
+				},
+			},
+		}
 		ng.ClassicLoadBalancerNames = []string{"clb-1", "clb-2"}
 		ng.TargetGroupARNs = []string{"tg-arn-1", "tg-arn-2"}
 
@@ -874,6 +883,21 @@ var _ = Describe("CloudFormation template builder API", func() {
 			Expect(ng.Properties).ToNot(BeNil())
 
 			Expect(ng.Properties.LoadBalancerNames).To(Equal([]string{"clb-1", "clb-2"}))
+		})
+
+		It("should have metrics collections set", func() {
+			Expect(ngTemplate.Resources).To(HaveKey("NodeGroup"))
+			ng := ngTemplate.Resources["NodeGroup"]
+			Expect(ng).ToNot(BeNil())
+			Expect(ng.Properties).ToNot(BeNil())
+
+			Expect(ng.Properties.MetricsCollection).ToNot(BeEmpty())
+			var metricsCollection map[string]interface{} = ng.Properties.MetricsCollection[0].(map[string]interface{})
+			Expect(metricsCollection).To(HaveKey("granularity"))
+			Expect(metricsCollection).To(HaveKey("metrics"))
+			Expect(metricsCollection["granularity"]).To(Equal("1Minute"))
+			Expect(metricsCollection["metrics"]).To(ContainElement("GroupMinSize"))
+			Expect(metricsCollection["metrics"]).To(ContainElement("GroupMaxSize"))
 		})
 
 		It("should have target groups ARNs set", func() {
