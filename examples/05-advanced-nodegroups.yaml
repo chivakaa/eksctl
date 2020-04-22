@@ -1,5 +1,5 @@
 # An advanced example of ClusterConfig object with customised nodegroups:
---- 
+---
 apiVersion: eksctl.io/v1alpha5
 kind: ClusterConfig
 
